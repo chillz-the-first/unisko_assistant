@@ -12,12 +12,14 @@ def send_payment_reminders(day):
     unpaid = get_unpaid_balances()
 
     for row in unpaid:
-        message = f"""
-            Hello {row["Parent Name"]}! 👋\n
-            This is a friendly reminder that payment of {row["Amount Due"]} for {row["Student Name"]} is due.\n
-            Please make the payment before the the {day + 7}th of this month to avoid disruptions to your child's sessions.\n
-            Thank you! 😊
-        """
+        message = (
+            f"Hello {row['Parent Name']}! 👋 "
+            f"This is a friendly reminder that payment of "
+            f"{row['Amount Due']} for {row['Student Name']} is due. "
+            f"Please make payment before the {day + 7}th of this month "
+            f"to avoid any disruptions to your child's sessions. "
+            f"Thank you! 😊"
+        )
 
         send_whatsapp_msg(row["Parent WhatsApp"], message)
 
