@@ -24,7 +24,7 @@ def get_faq():
 
     faq_text = ""
     for row in rows:
-        faq_text += f"Q: {row["Question"]}\nA: {row["Answer"]}\n\n"
+        faq_text += f"Q: {row['Question']}\nA: {row['Answer']}\n\n"
 
     return faq_text
 
@@ -45,7 +45,7 @@ def get_unpaid_balances():
 
     unpaid_balances = []
     for row in rows:
-        if row["Payment Status"] != "Unpaid":
+        if row["Payment Status"] == "Unpaid":
             unpaid_balances.append(row)
 
     return unpaid_balances

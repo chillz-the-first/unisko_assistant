@@ -68,6 +68,6 @@ def receive_message():
 
         log_unanswered_question(parent_number, parent_message)
     else:
-        send_whatsapp_msg(parent_number, message)
+        send_whatsapp_msg(parent_number, response)
 
     return "OK", 200

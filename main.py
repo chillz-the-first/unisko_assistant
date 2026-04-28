@@ -1,4 +1,3 @@
-from flask import Flask
 from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 import os
@@ -16,7 +15,7 @@ def send_payment_reminders(day):
         message = f"""
             Hello {row["Parent Name"]}! 👋\n
             This is a friendly reminder that payment of {row["Amount Due"]} for {row["Student Name"]} is due.\n
-            Please make the payment before the the 7th of this month to avoid disruptions to your child's sessions.\n
+            Please make the payment before the the {day + 7}th of this month to avoid disruptions to your child's sessions.\n
             Thank you! 😊
         """
 
@@ -34,6 +33,7 @@ def start_scheduler():
             day=day,
             hour=6,
             minute=0,
+            args=[day]
         )
 
 if __name__ == "__main__":
