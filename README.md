@@ -30,12 +30,14 @@ A WhatsApp automation system for an after-school tutoring centre that answers pa
 
 ```
 unisko_bot/
-├── main.py              # Entry point — runs the scheduler
+├── main.py              # Entry point — imports and runs the Flask app
 ├── data_manager.py      # All Google Sheets reading and writing
 ├── ai_handler.py        # Gemini AI prompt and response logic
 ├── whatsapp.py          # WhatsApp webhook, message sending, app entry point
+├── scheduler.py         # Payment reminder scheduling logic
 ├── requirements.txt     # Python dependencies
 ├── Procfile             # Render start command
+├── .python-version      # Pins Python version for Render
 ├── .env.example         # Template for required environment variables
 └── .gitignore           # Keeps secrets out of GitHub
 ```
@@ -152,6 +154,8 @@ python main.py
 
 > ⚠️ If Render shows a start command field that can't be left blank, enter `gunicorn whatsapp:app` directly in the dashboard rather than relying on the Procfile.
 
+> ⚠️ Make sure Render is using Python 3.11. Go to Settings and set the Python version to `3.11.9`. The `.python-version` file in the repo should also enforce this.
+
 ---
 
 ## Meta WhatsApp Webhook Setup
@@ -163,6 +167,20 @@ Once deployed, go to your Meta Developer App:
 3. Set the **Verify Token** to match your `VERIFY_TOKEN` environment variable
 4. Subscribe to the **messages** webhook field
 5. In **WhatsApp → Getting Started**, add your personal WhatsApp number to the test recipients list — Meta only allows messages to verified numbers until your app is fully approved
+
+---
+
+## Permanent WhatsApp Token Setup
+
+The token from the Getting Started page expires after 24 hours. To set up a permanent token:
+
+1. Go to **business.facebook.com** → your business portfolio
+2. Go to **Users** → **System Users** → **Add**
+3. Create a system user named `unisko-bot` with **Admin** role
+4. Click **Add Assets** → select your **Unisko Assistant** app → enable **Full Control**
+5. Click **Generate New Token** → select your app → enable `whatsapp_business_messaging` and `whatsapp_business_management`
+6. Copy the token immediately — Meta only shows it once
+7. Update `WHATSAPP_TOKEN` in your `.env` file and in Render's environment variables
 
 ---
 
@@ -196,15 +214,41 @@ Sends FAQ + message to Gemini AI
 
 ### Payment Reminder Flow
 ```
-1st, 10th, 20th of every month at 6am UTC (8am SAST)
+1st, 10th, 20th of every month at 4am UTC (6am SAST)
         ↓
 Read ParentBalances sheet
         ↓
 Filter rows where Payment Status = Unpaid
         ↓
 Send WhatsApp reminder to each unpaid parent
-(deadline adjusts per reminder: 8th, 17th, 27th)
+(deadline adjusts per reminder: 7th, 16th, 26th)
 ```
+
+---
+
+## Testing Payment Reminders
+
+To test the payment reminder system without waiting for the 1st of the month, temporarily update `start_scheduler()` in `scheduler.py`:
+
+```python
+def start_scheduler():
+    """Temporary test version — fires 5 minutes from now."""
+    from datetime import datetime, timedelta
+    scheduler = BackgroundScheduler()
+    test_time = datetime.now() + timedelta(minutes=5)
+
+    scheduler.add_job(
+        send_payment_reminders,
+        trigger="date",
+        run_date=test_time,
+        args=[1]
+    )
+    scheduler.start()
+    print(f"Test reminder scheduled for {test_time}")
+```
+
+> ⚠️ Use 5 minutes, not 2 — Render takes time to deploy and a shorter window may expire before the app starts.
+> ⚠️ After testing, always restore the production scheduler immediately.
 
 ---
 
@@ -214,7 +258,7 @@ Send WhatsApp reminder to each unpaid parent
 |-----------|--------|
 | **Render free tier sleeps** | The service sleeps after 15 minutes of inactivity. The first message after a quiet period may take ~30 seconds to respond as the server wakes up |
 | **Meta 1,000 conversation limit** | The free WhatsApp Cloud API allows up to 1,000 conversations per month. For a small tutoring centre this is more than enough, but worth monitoring |
-| **Meta temporary access token** | The WhatsApp token from the Getting Started page expires after 24 hours. For permanent use, set up a System User token via Meta Business Settings |
+| **Meta temporary access token** | The WhatsApp token from the Getting Started page expires after 24 hours. Always use a System User token for production |
 | **Gemini free tier rate limits** | `gemini-2.5-flash` on the free tier has limits on requests per minute and per day. For a small centre this is sufficient, but high message volumes could hit limits |
 | **No message history** | The bot has no memory of previous messages in a conversation. Each message is treated independently |
 | **Text messages only** | The bot currently only handles text messages. Voice notes, images, or documents sent by parents will be ignored |
@@ -290,7 +334,7 @@ model="gemini-2.5-flash"
 ### `404 NOT_FOUND` — Gemini model not found
 **Error:** `ClientError: 404 NOT_FOUND, models/gemini-1.5-flash is not found for API version v1beta`
 
-**Cause:** `gemini-1.5-flash` is no longer supported in the new `google-genai` SDK. The `models/` prefix is also not needed in the new SDK.
+**Cause:** `gemini-1.5-flash` is no longer supported in the new `google-genai` SDK. The `models/` prefix is also not needed.
 
 **Fix:** Update the model name in `ai_handler.py`:
 ```python
@@ -299,11 +343,51 @@ model="gemini-2.5-flash"  # No "models/" prefix needed
 
 ---
 
+### Payment reminder scheduler silently not firing
+**Symptom:** Logs show the scheduler is started and a time is printed, but no print statements from inside `send_payment_reminders` ever appear.
+
+**Cause:** `BackgroundScheduler` runs in a separate thread which gunicorn can silently kill before the job fires, especially on Python 3.14.
+
+**Fix:** Pin Render to Python 3.11 by creating a `.python-version` file:
+```
+3.11.9
+```
+And setting the Python version in Render's Settings dashboard to `3.11.9`. Python 3.11 has much better compatibility with APScheduler's background threads.
+
+---
+
+### `RecursionError: maximum recursion depth exceeded` in SSL
+**Error:** `RecursionError: maximum recursion depth exceeded` inside `ssl.py`
+
+**Cause:** Using `GeventScheduler` with the `gevent` worker on Python 3.14 causes gevent to patch Python's SSL library in a way that creates infinite recursion.
+
+**Fix:** Do not use `gevent` or `GeventScheduler`. Use `BackgroundScheduler` with standard gunicorn workers instead:
+```
+gunicorn whatsapp:app
+```
+And ensure Python 3.11 is pinned as described above.
+
+---
+
+### Circular import error between `main.py` and `whatsapp.py`
+**Symptom:** App starts but FAQ bot stops responding, or strange import errors appear.
+
+**Cause:** `main.py` importing from `whatsapp.py` while `whatsapp.py` imports from `main.py` creates a circular import that causes unpredictable behaviour.
+
+**Fix:** Move all scheduler logic to a separate `scheduler.py` file. `whatsapp.py` imports from `scheduler.py`, and `scheduler.py` imports from `whatsapp.py` only inside the function body (not at the top of the file) to avoid the circular dependency:
+```python
+def send_payment_reminders(day):
+    from whatsapp import send_whatsapp_msg  # import inside function, not at top
+    ...
+```
+
+---
+
 ### Messages arriving but bot not replying
 **Symptom:** Render logs show incoming POST requests but no WhatsApp reply is sent.
 
 **Things to check:**
-1. `WHATSAPP_TOKEN` in your environment variables is correct and not expired
+1. `WHATSAPP_TOKEN` in your environment variables is correct and not expired — use a permanent System User token
 2. `WHATSAPP_PHONE_NUMBER_ID` matches the number in your Meta dashboard
 3. The recipient's number is added to Meta's test recipients list (required until the app is approved)
 4. Check Render logs for any Python errors after the incoming request line
