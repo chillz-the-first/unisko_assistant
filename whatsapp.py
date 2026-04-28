@@ -72,5 +72,5 @@ def receive_message():
 
     return "OK", 200
 
-from main import start_scheduler
+from scheduler import start_scheduler
 start_scheduler()
