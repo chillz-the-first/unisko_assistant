@@ -16,7 +16,7 @@ def send_payment_reminders(day):
             f"Hello {row['Parent Name']}! 👋 "
             f"This is a friendly reminder that payment of "
             f"{row['Amount Due']} for {row['Student Name']} is due. "
-            f"Please make payment before the {day + 7}th of this month "
+            f"Please make payment before the {day + 6}th of this month "
             f"to avoid any disruptions to your child's sessions. "
             f"Thank you! 😊"
         )
@@ -24,18 +24,18 @@ def send_payment_reminders(day):
         send_whatsapp_msg(row["Parent WhatsApp"], message)
 
 def start_scheduler():
-    """Temporary test version — fires 2 minutes from now."""
-    from datetime import datetime, timedelta
-
+    """Sets up the monthly payment reminder schedule."""
     scheduler = BackgroundScheduler()
-    test_time = datetime.now() + timedelta(minutes=2)
 
-    scheduler.add_job(
-        send_payment_reminders,
-        trigger="date",
-        run_date=test_time,
-        args=[1]
-    )
+    reminder_days = [1, 10, 20]
+    for day in reminder_days:
+        scheduler.add_job(
+            send_payment_reminders,
+            trigger="cron",
+            day=day,
+            hour=4,
+            minute=0,
+            args=[day],
+        )
 
     scheduler.start()
-    print(f"Test reminder scheduled for {test_time}")
