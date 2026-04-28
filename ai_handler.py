@@ -28,4 +28,5 @@ def get_ai_response(parent_message, faq_text):
     """
 
     response = model.generate_content(prompt)
-    return response.text.strip().upper()
+    answer = response.text.strip()
+    return answer.upper() if answer.upper() == "ESCALATE" else answer

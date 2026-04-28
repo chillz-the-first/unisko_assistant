@@ -15,7 +15,7 @@ def get_google_client():
     creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
     return gspread.authorize(creds)
 
-def ger_faq():
+def get_faq():
     """Reads the FAQ sheet and returns a formatted string of Q&A pairs."""
     client = get_google_client()
     sheet = client.open_by_key(os.environ["FAQ_SHEET_ID"]).sheet1
@@ -26,3 +26,7 @@ def ger_faq():
         faq_text += f"Q: {row["Question"]}\nA: {row["Answer"]}\n\n"
 
     return faq_text
+
+
+def log_unanswered_question(parent_number, parent_message):
+    return None
