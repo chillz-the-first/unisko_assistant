@@ -19,7 +19,7 @@ def get_google_client():
 def get_faq():
     """Reads the FAQ sheet and returns a formatted string of Q&A pairs."""
     client = get_google_client()
-    sheet = client.open_by_key(os.environ["FAQ_SHEET_ID"]).sheet1
+    sheet = client.open_by_key(os.getenv("FAQ_SHEET_ID")).sheet1
     rows = sheet.get_all_records()
 
     faq_text = ""
@@ -32,8 +32,21 @@ def get_faq():
 def log_unanswered_question(parent_number, question):
     """Logs an unanswered question to the UnansweredQuestions sheet."""
     client = get_google_client()
-    sheet = client.open_by_key(os.environ["UNANSWERED_SHEET_ID"]).sheet1
+    sheet = client.open_by_key(os.getenv("UNANSWERED_SHEET_ID")).sheet1
 
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     sheet.append_row([timestamp, parent_number, question, "Pending"])
+
+def get_unpaid_balances():
+    client = get_google_client()
+    sheet = client.open_by_key(os.getenv("BALANCES_SHEET_ID")).sheet1
+    rows = sheet.get_all_records()
+
+    unpaid_balances = []
+    for row in rows:
+        if row["Payment Status"] != "Unpaid":
+            unpaid_balances.append(row)
+
+    return unpaid_balances
+
