@@ -22,17 +22,18 @@ def send_payment_reminders(day):
         send_whatsapp_msg(row["Parent WhatsApp"], message)
 
 def start_scheduler():
-    """Sets up the monthly payment reminder schedule."""
-    scheduler = BackgroundScheduler()
+    """Temporary test version — fires 2 minutes from now."""
+    from datetime import datetime, timedelta
 
-    reminder_days = [1, 10, 28]
-    for day in reminder_days:
-        scheduler.add_job(
-            send_payment_reminders,
-            trigger="cron",
-            day=day,
-            hour=9,
-            minute=0,
-            args=[day]
-        )
+    scheduler = BackgroundScheduler()
+    test_time = datetime.now() + timedelta(minutes=2)
+
+    scheduler.add_job(
+        send_payment_reminders,
+        trigger="date",
+        run_date=test_time,
+        args=[1]
+    )
+
     scheduler.start()
+    print(f"Test reminder scheduled for {test_time}")
