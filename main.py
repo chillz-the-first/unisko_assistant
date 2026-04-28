@@ -31,8 +31,8 @@ def start_scheduler():
             send_payment_reminders,
             trigger="cron",
             day=day,
-            hour=8,
-            minute=42,
+            hour=9,
+            minute=0,
             args=[day]
         )
     scheduler.start()
