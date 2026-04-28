@@ -3,6 +3,7 @@ from google.oauth2.service_account import Credentials
 from dotenv import load_dotenv
 import os
 from datetime import datetime
+import json
 
 load_dotenv()
 
@@ -13,7 +14,8 @@ SCOPES = [
 
 def get_google_client():
     """Creates and returns an authorised Google Sheets client."""
-    creds = Credentials.from_service_account_file("credentials.json", scopes=SCOPES)
+    cred_json = json.loads(os.getenv("GOOGLE_CREDENTIALS"))
+    creds = Credentials.from_service_account_info(cred_json, scopes=SCOPES)
     return gspread.authorize(creds)
 
 def get_faq():
