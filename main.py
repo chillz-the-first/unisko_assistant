@@ -25,14 +25,14 @@ def start_scheduler():
     """Sets up the monthly payment reminder schedule."""
     scheduler = BackgroundScheduler()
 
-    reminder_days = [1, 10, 20]
+    reminder_days = [1, 10, 28]
     for day in reminder_days:
         scheduler.add_job(
             send_payment_reminders,
             trigger="cron",
             day=day,
-            hour=6,
-            minute=0,
+            hour=8,
+            minute=42,
             args=[day]
         )
     scheduler.start()
