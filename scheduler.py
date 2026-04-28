@@ -1,4 +1,4 @@
-from apscheduler.schedulers.gevent import GeventScheduler
+from apscheduler.schedulers.background import BackgroundScheduler
 from datetime import datetime, timedelta
 from data_manager import get_unpaid_balances
 
@@ -23,8 +23,8 @@ def send_payment_reminders(day):
         print(f"Reminder sent to {row['Parent WhatsApp']}")
 
 def start_scheduler():
-    scheduler = GeventScheduler()
-    test_time = datetime.now() + timedelta(minutes=5)
+    scheduler = BackgroundScheduler()
+    test_time = datetime.now() + timedelta(minutes=2)
 
     scheduler.add_job(
         send_payment_reminders,
