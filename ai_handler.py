@@ -1,10 +1,8 @@
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 import os
 
 load_dotenv()
-
-genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 
 def get_ai_response(parent_message, faq_text):
     """
@@ -12,7 +10,7 @@ def get_ai_response(parent_message, faq_text):
     Returns an answer if found, or 'ESCALATE' if not.
     """
 
-    model = genai.GenerativeModel("gemini-1.5-flash")
+    client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
 
     prompt = f"""
     You are a friendly assistant for a tutoring centre.
@@ -27,6 +25,9 @@ def get_ai_response(parent_message, faq_text):
     {parent_message}
     """
 
-    response = model.generate_content(prompt)
+    response = client.models.generate_content(
+        model="gemini-2.0-flash",
+        contents=prompt
+    )
     answer = response.text.strip()
     return answer.upper() if answer.upper() == "ESCALATE" else answer

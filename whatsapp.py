@@ -71,3 +71,6 @@ def receive_message():
         send_whatsapp_msg(parent_number, response)
 
     return "OK", 200
+
+from main import start_scheduler
+start_scheduler()

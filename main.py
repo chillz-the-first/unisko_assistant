@@ -35,7 +35,4 @@ def start_scheduler():
             minute=0,
             args=[day]
         )
-
-if __name__ == "__main__":
-    start_scheduler()
-    app.run(port=5000)
+    scheduler.start()
