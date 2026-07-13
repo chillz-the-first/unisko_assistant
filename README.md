@@ -87,6 +87,7 @@ WHATSAPP_TOKEN=your_meta_whatsapp_token
 WHATSAPP_PHONE_NUMBER_ID=your_phone_number_id
 VERIFY_TOKEN=your_chosen_verify_token
 OWNER_WHATSAPP_NUMBER=27xxxxxxxxx
+PAYMENT_TEMPLATE_NAME=payment_reminder
 GOOGLE_CREDENTIALS={"type":"service_account", ...entire json content...}
 ```
 
@@ -184,6 +185,25 @@ The token from the Getting Started page expires after 24 hours. To set up a perm
 
 ---
 
+## Payment Reminder Template (required for real customers)
+
+WhatsApp only allows free-form text inside a 24-hour window after the customer last messaged you. Payment reminders are business-initiated, so outside Meta test mode they must use an approved **template message**.
+
+1. Go to **Meta Business Suite → WhatsApp Manager → Message Templates → Create Template**
+2. Category: **Utility**. Name: `payment_reminder`. Language: English
+3. Body text (the numbered placeholders are filled in by the bot):
+
+```
+Hello {{1}}! 👋 This is a friendly reminder that payment of {{2}} for {{3}} is due. Please make payment before the {{4}} to avoid any disruptions to your child's sessions. Thank you! 😊
+```
+
+4. Submit for review (usually approved within a day)
+5. Set `PAYMENT_TEMPLATE_NAME=payment_reminder` in your `.env` and in Render's environment variables
+
+The bot fills `{{1}}`–`{{4}}` with the parent's name, amount due, student name, and deadline. If `PAYMENT_TEMPLATE_NAME` is left blank, the bot falls back to plain text reminders, which only work in test mode with whitelisted numbers.
+
+---
+
 ## How It Works
 
 ### FAQ Bot Flow
@@ -261,8 +281,9 @@ def start_scheduler():
 | **Meta temporary access token** | The WhatsApp token from the Getting Started page expires after 24 hours. Always use a System User token for production |
 | **Gemini free tier rate limits** | `gemini-2.5-flash` on the free tier has limits on requests per minute and per day. For a small centre this is sufficient, but high message volumes could hit limits |
 | **No message history** | The bot has no memory of previous messages in a conversation. Each message is treated independently |
-| **Text messages only** | The bot currently only handles text messages. Voice notes, images, or documents sent by parents will be ignored |
-| **Scheduler timezone** | APScheduler runs in UTC by default. South Africa is UTC+2, so the 6am scheduled time fires at 8am SAST — which is intentional, but worth knowing if you change the schedule |
+| **Text messages only** | The bot only answers text messages. If a parent sends a voice note, image or document, the bot replies asking them to type their question instead |
+| **Scheduler timezone** | APScheduler runs in UTC by default. South Africa is UTC+2, so the job scheduled for 04:00 UTC fires at 06:00 SAST. Keep this offset in mind if you change the schedule |
+| **Render free tier sleeps kill the scheduler** | A sleeping server cannot fire scheduled jobs, so payment reminders may silently never send on the free tier. Use an uptime pinger (e.g. UptimeRobot every 10 min) or a paid instance |
 
 ---
 

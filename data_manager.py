@@ -26,7 +26,10 @@ def get_faq():
 
     faq_text = ""
     for row in rows:
-        faq_text += f"Q: {row['Question']}\nA: {row['Answer']}\n\n"
+        question = str(row.get("Question", "")).strip()
+        answer = str(row.get("Answer", "")).strip()
+        if question and answer:  # skip blank or half-filled rows
+            faq_text += f"Q: {question}\nA: {answer}\n\n"
 
     return faq_text
 
@@ -41,14 +44,15 @@ def log_unanswered_question(parent_number, question):
     sheet.append_row([timestamp, parent_number, question, "Pending"])
 
 def get_unpaid_balances():
+    """Returns all rows where Payment Status is Unpaid (case-insensitive)."""
     client = get_google_client()
     sheet = client.open_by_key(os.getenv("BALANCES_SHEET_ID")).sheet1
     rows = sheet.get_all_records()
 
     unpaid_balances = []
     for row in rows:
-        if row["Payment Status"] == "Unpaid":
+        status = str(row.get("Payment Status", "")).strip().lower()
+        if status == "unpaid":
             unpaid_balances.append(row)
 
     return unpaid_balances
-
