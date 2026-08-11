@@ -30,7 +30,7 @@ def get_ai_response(parent_message, faq_text):
 
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash",
             contents=prompt
         )
         answer = response.text.strip()
