@@ -64,9 +64,16 @@ def start_scheduler():
     at 04:00 UTC, which is 06:00 South African time (SAST = UTC+2)."""
     scheduler = BackgroundScheduler()
 
+    reminder_days = [1, 10, 20]
+    for day in reminder_days:
+        scheduler.add_job(
+            send_payment_reminders,
+            trigger="cron",
+            day=day,
+            hour=4,
+            minute=0,
+            args=[day]
+        )
 
-    from datetime import datetime, timedelta
-    test_time = datetime.now() + timedelta(minutes=3)
-    scheduler.add_job(send_payment_reminders, trigger="date", run_date=test_time, args=[1])
     scheduler.start()
     print('Payment reminder scheduler started')
