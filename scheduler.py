@@ -60,16 +60,13 @@ def send_payment_reminders(day):
             print(f"Failed to send reminder for row {row}: {e}")
 
 def start_scheduler():
-    """Temporary test version — fires 5 minutes from now."""
-    from datetime import datetime, timedelta
+    """Sends payment reminders on the 1st, 10th and 20th of every month
+    at 04:00 UTC, which is 06:00 South African time (SAST = UTC+2)."""
     scheduler = BackgroundScheduler()
-    test_time = datetime.now() + timedelta(minutes=5)
 
-    scheduler.add_job(
-        send_payment_reminders,
-        trigger="date",
-        run_date=test_time,
-        args=[1]
-    )
+
+    from datetime import datetime, timedelta
+    test_time = datetime.now() + timedelta(minutes=3)
+    scheduler.add_job(send_payment_reminders, trigger="date", run_date=test_time, args=[1])
     scheduler.start()
-    print(f"Test reminder scheduled for {test_time}")
+    print('Payment reminder scheduler started')
