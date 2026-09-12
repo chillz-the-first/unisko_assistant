@@ -1,1 +1,1 @@
-web: gunicorn --workers 1 whatsapp:app
+web: gunicorn --workers 1 --timeout 120 whatsapp:app

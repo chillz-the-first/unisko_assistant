@@ -72,7 +72,12 @@ def start_scheduler():
             day=day,
             hour=4,
             minute=0,
-            args=[day]
+            args=[day],
+            # If the server was asleep/restarting when a job was due, do NOT
+            # run it late on the next boot. Only run if we're within 1 hour
+            # of the real scheduled time, and collapse any duplicates into one.
+            misfire_grace_time=3600,
+            coalesce=True
         )
 
     scheduler.start()
