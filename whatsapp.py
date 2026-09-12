@@ -10,6 +10,9 @@ from ai_handler import get_ai_response
 load_dotenv()
 
 app = Flask(__name__)
+@app.route("/")
+def health_check():
+    return "OK", 200
 
 WHATSAPP_TOKEN = os.getenv('WHATSAPP_TOKEN')
 PHONE_NUMBER_ID = os.getenv('WHATSAPP_PHONE_NUMBER_ID')
