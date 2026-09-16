@@ -1,4 +1,5 @@
 from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 import os
 
@@ -38,10 +39,20 @@ def get_ai_response(parent_message, faq_text):
     try:
         response = client.models.generate_content(
             model="gemini-3.5-flash",
-            contents=prompt
+            contents=prompt,
+            # If Gemini doesn't answer within 20s, this raises
+            config=types.GenerateContentConfig(
+                http_options = types.HttpOptions(timeout=20000)
+            )
         )
         answer = response.text.strip()
     except Exception as e:
+        text = str(e)
+
+        if "503" in text or "UNAVAILABLE" in text or "overloaded" in text.lower() or "timeout" in text.lower():
+            print(f"Gemini temporarily unavailable: {e}")
+            return "UNAVAILABLE"
+
         print(f"Gemini error, escalating instead: {e}")
         return "ESCALATE"
 

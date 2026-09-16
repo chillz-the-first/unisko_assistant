@@ -16,7 +16,9 @@ def get_google_client():
     """Creates and returns an authorised Google Sheets client."""
     cred_json = json.loads(os.getenv("GOOGLE_CREDENTIALS"))
     creds = Credentials.from_service_account_info(cred_json, scopes=SCOPES)
-    return gspread.authorize(creds)
+    client = gspread.authorize(creds)
+    client.http_client.timeout = 15
+    return client
 
 def get_faq():
     """Reads the FAQ sheet and returns a formatted string of Q&A pairs."""

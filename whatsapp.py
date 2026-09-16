@@ -118,7 +118,13 @@ def receive_message():
         print(f"Error while processing message: {e}")
         response = "ESCALATE"
 
-    if response == "ESCALATE":
+    if response == "UNAVAILABLE":
+        send_whatsapp_msg(
+            parent_number,
+            "Sorry, I'm a little busy at the moment."
+            "Please send your question again in a minute and I'll help you."
+        )
+    elif response == "ESCALATE":
         send_whatsapp_msg(
             parent_number,
             "I've passed your message to the owner who will be in touch shortly!"
