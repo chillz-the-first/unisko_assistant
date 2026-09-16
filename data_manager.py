@@ -17,7 +17,7 @@ def get_google_client():
     cred_json = json.loads(os.getenv("GOOGLE_CREDENTIALS"))
     creds = Credentials.from_service_account_info(cred_json, scopes=SCOPES)
     client = gspread.authorize(creds)
-    client.http_client.timeout = 15
+    client.http_client.timeout = 30
     return client
 
 def get_faq():
